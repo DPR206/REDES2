@@ -24,6 +24,12 @@ broadcastAddr = bytes([0xFF]*6)
 #Diccionario que alamacena para un Ethertype dado qué función de callback se debe ejecutar
 EthernetProtocols = {}
 
+levelInitialized = False
+macAddress = None
+handle = None
+recvThread = None
+
+
 def getHwAddr(interface:str):
     '''
         Nombre: getHwAddr
@@ -146,15 +152,26 @@ def startEthernetLevel(interface:str) -> int:
         Retorno: 0 si todo es correcto, -1 en otro caso
     '''
     global macAddress,handle,levelInitialized,recvThread
-    handle = None
-    logging.debug('Función no implementada')
+    #handle = None
+    #logging.debug('Función no implementada')
+    
     #TODO: implementar aquí la inicialización de la interfaz y de las variables globales
+    if levelInitialized:
+		return -1
+    
+    macAddress = getHwAddr(interface)
+    
+    handle = pcap_open_live(interface, ETH_FRAME_MAX, PROMISC, TO_MS, None)
+    
+    if handle is None:
+		return -1
 
     #Una vez hemos abierto la interfaz para captura y hemos inicializado las variables globales (macAddress, handle y levelInitialized) arrancamos
     #el hilo de recepción
     recvThread = rxThread()
     recvThread.daemon = True
-    recvThread.start()
+    recvThread.start() 
+    levelInitialized = True
     return 0
 
 def stopEthernetLevel()->int:
@@ -169,7 +186,17 @@ def stopEthernetLevel()->int:
         Argumentos: Ninguno
         Retorno: 0 si todo es correcto y -1 en otro caso
     '''
-    logging.debug('Función no implementada')
+    #logging.debug('Función no implementada')
+    
+    if recvThread is not None:
+		recvThread.stop()
+		recvThread = None
+    
+    if handle is not None:
+		pcap_close(handle)
+		handle = None
+    
+    levelInitialized = False
     return 0
     
 def sendEthernetFrame(data:bytes,length:int,etherType:int,dstMac:bytes) -> int:
