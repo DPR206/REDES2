@@ -68,8 +68,25 @@ def process_Ethernet_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes) -> 
         Retorno:
             -Ninguno
     '''
-    logging.debug('Trama nueva. Función no implementada')
+    #logging.debug('Trama nueva. Función no implementada')
     #TODO: Implementar aquí el código que procesa una trama Ethernet en recepción
+    
+    dstMac, orgMac, etherType = struct.unpack('!6s6sH', data[:14])
+    
+    payload = data[14:]
+    
+    global macAddress
+    
+    if dstMac != macAddress and dstMac != broadcastAddr:
+		return
+	
+	if etherType in EthernetProtocols:
+		callback_func = EthernetProtocols[etherType]
+		
+		callback_func(us, header, payload, orgMac)
+	else:
+		return
+		
     
 
 def process_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes) -> None:
@@ -134,7 +151,8 @@ def registerEthCallback(callback_func: Callable[[ctypes.c_void_p,pcap_pkthdr,byt
     '''
     global EthernetProtocols
     #EthernetProtocols es el diccionario que relaciona función de callback y ethertype
-    logging.debug('Función no implementada')
+    #logging.debug('Función no implementada')
+    EthernetProtocols[ethertype] = callback_func
     
 
 def startEthernetLevel(interface:str) -> int:
@@ -171,7 +189,9 @@ def startEthernetLevel(interface:str) -> int:
     recvThread = rxThread()
     recvThread.daemon = True
     recvThread.start() 
+    
     levelInitialized = True
+    
     return 0
 
 def stopEthernetLevel()->int:
@@ -197,6 +217,7 @@ def stopEthernetLevel()->int:
 		handle = None
     
     levelInitialized = False
+    
     return 0
     
 def sendEthernetFrame(data:bytes,length:int,etherType:int,dstMac:bytes) -> int:
@@ -217,6 +238,21 @@ def sendEthernetFrame(data:bytes,length:int,etherType:int,dstMac:bytes) -> int:
         Retorno: 0 si todo es correcto, -1 en otro caso
     '''
     global macAddress,handle
-    logging.debug('Función no implementada')
+    #logging.debug('Función no implementada')
     
-        
+    header = struct.pack('!6s6sH', dstMac, macAddress, etherType)
+    
+    frame = header + data[:length]
+    
+    if len(frame) > ETH_FRAME_MAX:
+		return -1
+	elif len(frame) < ETH_FRAME_MIN:
+		frame = frame + b'\x00' * (ETH_FRAME_MIN - len(frame))
+		
+	ret = pcap_inject(handle, frame, len(frame))
+	
+	if ret < 0:
+		logging.debug('Error al enviar la trama')
+		return -1
+	
+	return 0
