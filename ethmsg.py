@@ -20,8 +20,6 @@ ETHTYPE = 0x0AA0
 broadcast = bytes([0xFF]*6)
 
 
-
-
 def process_ethMsg_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes,srcMac:bytes) -> None:
     '''
         Nombre: process_EthMsg_frame
@@ -42,6 +40,7 @@ def process_ethMsg_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes,srcMac
     
     msg_len = struct.unpack('!H', data[:2])[0]
 	msg_bytes = data[2:2+msg_len]
+	#msg_bytes = data[2:]
 	
 	#Formateo del mensaje 
 	message = msg_bytes.decode('utf-8', errors='ignore')
