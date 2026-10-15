@@ -31,7 +31,6 @@ requestedIP = None
 resolvedMAC = None
 #Variable que alamacenará True mientras estemos esperando una respuesta ARP
 awaitingResponse = False
-ipConflict = False
 
 #Variable para proteger la caché
 cacheLock = Lock()
