@@ -104,7 +104,7 @@ if __name__ == "__main__":
 				#ARP gratuito
 				myIp = getIP(args.interface)
 				gratRequest = createARPRequest(myIp)
-				sendEthernetFrame(gratRequest, len(gratRequest), broadcastAddr, 0x0806)
+				sendEthernetFrame(gratRequest, len(gratRequest), 0x0806, broadcastAddr)
 			else:
 				print("Comando no reconocido. 'h' para ayuda.\n")
 		except KeyboardInterrupt:
