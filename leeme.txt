@@ -1,0 +1,11 @@
+Práctica 2 Redes de Comunicación 1
+Autores: Claudia Saiz Escribano y Duna Puente Romera
+
+Recibir tramas Ethernet, realizar comprobaciones y llamar correctamente a la función de callback de nivel superior: Realizado - Se inicializa la interfaz para la recepción de tramas a nivel Ethernet y se abre el hilo de recepción. Al recibir tramas se extraen los campos, se comprueba la dirección de destino y se actúa en función de la misma. Asimismo, se comprueba si hay alguna función callback de nivel superior asociada al ethertype y, en caso afirmativo, se la llama con los argumentos correspondientes.
+Enviar tramas Ethernet correctamente: Realizado - 
+Imprimir mensajes sobre el protocolo 0x0AA0: Realizado - 
+Enviar correctamente peticiones ARP: Realizado -
+Procesar correctamente peticiones ARP recibidas: Realizado - 
+Enviar correctamente respuestas ARP: Realizado - 
+Procesar correctamente respuestas ARP: Realizado - 
+Manejo correcto de la caché ARP: Realizado -
