@@ -14,7 +14,6 @@ import time
 from threading import Lock
 from expiringdict import ExpiringDict
 
-#ETHTYPE = 0x3003
 ETHTYPE = 0x0AA0
 #Dirección de difusión (Broadcast)
 broadcast = bytes([0xFF]*6)
