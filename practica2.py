@@ -100,7 +100,11 @@ if __name__ == "__main__":
 				print(f"Enviando mensaje de {len(mensaje)} Bytes: {mensaje}")
 				# Aquí puedes llamar a una función que maneje el envío de mensajes
 				sendEthMsg(mensaje)
-			#TODO ARP gratuito
+			elif comando == 'g':
+				#ARP gratuito
+				myIp = getIP(args.interface)
+				gratRequest = createARPRequest(myIp)
+				sendEthernetFrame(gratRequest, len(gratRequest), broadcastAddr, 0x0806)
 			else:
 				print("Comando no reconocido. 'h' para ayuda.\n")
 		except KeyboardInterrupt:
