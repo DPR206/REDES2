@@ -68,7 +68,6 @@ def process_Ethernet_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes) -> 
 		Retorno:
 			-Ninguno
 	'''
-	#logging.debug('Trama nueva. Función no implementada')
 	#TODO: Implementar aquí el código que procesa una trama Ethernet en recepción
 	
 	dstMac, orgMac, etherType = struct.unpack('!6s6sH', data[:14])
@@ -147,7 +146,6 @@ def registerEthCallback(callback_func: Callable[[ctypes.c_void_p,pcap_pkthdr,byt
 	'''
 	global EthernetProtocols
 	#EthernetProtocols es el diccionario que relaciona función de callback y ethertype
-	#logging.debug('Función no implementada')
 	EthernetProtocols[ethertype] = callback_func
 	
 
@@ -167,7 +165,6 @@ def startEthernetLevel(interface:str) -> int:
 	'''
 	global macAddress,handle,levelInitialized,recvThread
 	#handle = None
-	#logging.debug('Función no implementada')
 	
 	#TODO: implementar aquí la inicialización de la interfaz y de las variables globales
 	if levelInitialized:
@@ -202,7 +199,6 @@ def stopEthernetLevel()->int:
 		Argumentos: Ninguno
 		Retorno: 0 si todo es correcto y -1 en otro caso
 	'''
-	#logging.debug('Función no implementada')
 	
 	if recvThread is not None:
 		recvThread.stop()
@@ -234,7 +230,6 @@ def sendEthernetFrame(data:bytes,length:int,etherType:int,dstMac:bytes) -> int:
 		Retorno: 0 si todo es correcto, -1 en otro caso
 	'''
 	global macAddress,handle
-	#logging.debug('Función no implementada')
 	header = struct.pack('!6s6sH', dstMac, macAddress, etherType)
 	
 	frame = header + data[:length]
