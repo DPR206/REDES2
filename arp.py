@@ -69,9 +69,13 @@ def printCache()->None:
 	'''
 	print('{:>12}\t\t{:>12}'.format('IP','MAC'))
 	with cacheLock:
-		for k in cache:
-			if k in cache:
-				print ('{:>12}\t\t{:>12}'.format(socket.inet_ntoa(struct.pack('!I',k)),':'.join(['{:02X}'.format(b) for b in cache[k]])))
+		entradas = [(k, cache.get(k)) for k in list(cache.keys())]
+	for k, mac in entradas:
+		if mac is None:
+			continue
+		print('{:>12}\t\t{:>12}'.format(
+			socket.inet_ntoa(struct.pack('!I', k)),
+			':'.join(['{:02X}'.format(b) for b in mac])))
 
 
 
@@ -105,11 +109,17 @@ def processARPRequest(data:bytes,MAC:bytes)->None:
 	if senderMAC != MAC:
 		return
 	
-	#Extraer la IP origen
+	#Extraer la IP origen y destino
 	senderIP = struct.unpack('!I', data[8:12])[0]
-	
-	#Extraer la IP destino y comprobar si es la propia
 	targetIP = struct.unpack('!I', data[18:22])[0]
+	
+	#Comprobar si es un ARPGrauito
+	if senderIP == targetIP:
+		with cacheLock:
+			cache[senderIP] = senderMAC
+		return
+	
+	#Comprobar si es para nosotros
 	if targetIP != myIP:
 		return
 	
@@ -141,7 +151,6 @@ def processARPReply(data:bytes,MAC:bytes)->None:
 		Retorno: Ninguno
 	'''
 	global requestedIP,resolvedMAC,awaitingResponse,cache
-	
 	if len(data) < 22:
 		return
 	opcode = struct.unpack('!H', data[0:2])[0]
@@ -186,7 +195,7 @@ def createARPRequest(ip:int) -> bytes:
 	global myMAC, myIP
 
 	if myMAC is None or myIP is None:
-		return NoneType
+		return None
 	
 	opcode = struct.pack('!H', 0x0001)
 
@@ -217,8 +226,9 @@ def createARPReply(IP:int ,MAC:bytes) -> bytes:
 		Retorno: Bytes con el contenido de la trama de petición ARP
 	'''
 	global myMAC,myIP
+	
 	if myMAC is None or myIP is None:
-		return NoneType
+		return None
 	
 	opcode = struct.pack('!H', 0x0002)
 
@@ -226,7 +236,7 @@ def createARPReply(IP:int ,MAC:bytes) -> bytes:
 	senderIP = struct.pack('!I', myIP)
 
 	targetMAC = MAC
-	targetIP = struct.pack('!I', ip)
+	targetIP = struct.pack('!I', IP)
 
 	return (
 		ARPHeader
@@ -333,21 +343,32 @@ def ARPResolution(ip:int) -> bytes:
 	with globalLock:
 		if awaitingResponse:
 			return None
-
 		requestedIP = ip
 		resolvedMAC = None
 		awaitingResponse = True
 		
 	request = createARPRequest(ip)
+	result = None
 
 	for intento in range(3):
 		# Enviar la petición ARP por broadcast
 		sendEthernetFrame(request, len(request), 0x0806, broadcastAddr)
 
 		# Esperar hasta un segundo a que llegue la respuesta
-		with globalLock:
+		deadline = time.time() + 1
+		while time.time() < deadline:
+			with globalLock:
 				if not awaitingResponse:
 					result = resolvedMAC
-					return result
-	
-	return None
+					break
+			time.sleep(0.01)
+
+		if result is not None:
+			break
+
+	#Limpiar el estado
+	with globalLock:
+		awaitingResponse = False
+		requestedIP = None
+
+	return result
