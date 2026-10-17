@@ -24,7 +24,7 @@ def printHelp():
     print ( "\ta <direccionIP> : Solicita ARP Request sobre la IP indicada\n")
     print ( "\tp : Imprime cache ARP\n")
     print ( "\th : Muestra la ayuda\n")
-    #TODO g : ARP gratuito
+    print ( "\tg: ARP gratuito\n")
     print ( "\tq : Salir del programa\n")
 
 
