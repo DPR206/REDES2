@@ -35,7 +35,6 @@ def process_ethMsg_frame(us:ctypes.c_void_p,header:pcap_pkthdr,data:bytes,srcMac
 			-srcMac: MAC origen de la trama Ethernet que se ha recibido
 		Retorno: Ninguno
 	'''
-	#logging.debug('EthMsg: Función no implementada')
 	
 	msg_len = struct.unpack('!H', data[:2])[0]
 	msg_bytes = data[2:2+msg_len]
@@ -62,7 +61,6 @@ def initEthMsg(interface:str) -> int:
 		Argumentos:   
 			interfaz
 	'''
-	#logging.debug('EthMsg: Función no implementada')
 	
 	if startEthernetLevel(interface) < 0:
 		return -1
@@ -88,7 +86,6 @@ def sendEthMsg(message:bytes) -> bytes:
 				
 		  
 	'''
-	#logging.debug('EthMsg: Función no implementada')
 	
 	data = struct.pack('!H', len(message)) + message
 	
