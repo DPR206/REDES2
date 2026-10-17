@@ -5,8 +5,8 @@ Recibir tramas Ethernet, realizar comprobaciones y llamar correctamente a la fun
 Enviar tramas Ethernet correctamente: Realizado - Se construye el encabezado siguiendo el formato preestablecido y se le añaden todos los datos útiles de la trama
 Se construye la cabecera usando el formato preestablecido y se le añade al final el payload. Una vez realizado, se comprueba el tamaño de la trama y se hacen los cambios necesarios en caso de que sea demasiado grande o pequeña. Finalmente, se envía la trama por la interfaz red y se comprueba que el proceso se haya realizado correctamente.
 Imprimir mensajes sobre el protocolo 0x0AA0: Realizado - Se inicializa EthMsg asociando la función de callback para procesar mensajes al ethertype 0x0AA0. De manera que al enviar un mensaje desde una interfaz este se formatea y se envía en modo broadcast. Luego, al llegar a otra interfaz, el mensaje se imprime correctamente y detecta la IP origen correctamente.
-Enviar correctamente peticiones ARP: Realizado -
-Procesar correctamente peticiones ARP recibidas: Realizado - 
-Enviar correctamente respuestas ARP: Realizado - 
-Procesar correctamente respuestas ARP: Realizado - 
-Manejo correcto de la caché ARP: Realizado -
+Enviar correctamente peticiones ARP: Realizado - createARPRequest construye la petición con la cabecera ARP, opcode 0x0001, nuestra MAC e IP como origen y la IP a resolver como destino. ARPResolution consulta primero la caché y, si no está, la envía en broadcast y espera 1 segundo, con hasta 3 reintentos
+Procesar correctamente peticiones ARP recibidas: Realizado - processARPRequest actualiza la caché si es un ARP gratuito, responde si alguien anuncia nuestra IP (conflicto) y en los demás casos, solo contesta cuando la IP destino es la nuestra
+Enviar correctamente respuestas ARP: Realizado - createARPReply construye la respuesta con opcode 0x0002 y nuestros datos como origen, y se envía a la MAC del solicitante
+Procesar correctamente respuestas ARP: Realizado - processARPReply bajo globalLock comprueba que se espera esa IP, guarda la MAC en resolvedMAC, y añade la entrada a la caché
+Manejo correcto de la caché ARP: Realizado - ExpiringDict con entradas de 10 segundos, protegido con cacheLock. Se rellena con respuestas ARP y gratuitos de otros equipos, y se consulta antes de enviar una solicitud ARP
