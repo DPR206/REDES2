@@ -38,7 +38,7 @@ cacheLock = Lock()
 cache = ExpiringDict(max_len=100, max_age_seconds=10)
 
 #Variable global Ip propio
-myIp = None
+myIP = None
 #Variable global MAc propia
 myMAC = None
 
@@ -112,9 +112,17 @@ def processARPRequest(data:bytes,MAC:bytes)->None:
 	#Extraer la IP origen y destino
 	senderIP = struct.unpack('!I', data[8:12])[0]
 	targetIP = struct.unpack('!I', data[18:22])[0]
-	
+		
 	#Comprobar si es un ARPGrauito
 	if senderIP == targetIP:
+		if senderMAC == myMAC:
+			return
+			
+		if senderIP == myIP:
+			reply = createARPReply(senderIP, senderMAC)
+			sendEthernetFrame(reply, len(reply), 0x0806, senderMAC)
+			return
+		
 		with cacheLock:
 			cache[senderIP] = senderMAC
 		return
@@ -301,14 +309,11 @@ def initARP(interface:str) -> int:
 	#Obtener y almacenar direccion Mac e IP en la cache temporal
 	myIP = getIP(interface)
 	myMAC = getHwAddr(interface)
-	with cacheLock:
-		cache[myIP]=myMAC
 	
-	#Realizar tres peticiones arp gratuito
-	gratRequest = createARPRequest(myIP)
-	
-	for _ in range(3):
-		sendEthernetFrame(gratRequest, len(gratRequest), 0x0806, broadcastAddr)
+	if checkIPConflict():
+		print("Conflicto con IP, no se ha podido inicializar")
+		arpInitialized = False
+		return -1
 	
 	#Marcar la variable como True
 	arpInitialized = True
@@ -336,7 +341,7 @@ def ARPResolution(ip:int) -> bytes:
 	global requestedIP,awaitingResponse,resolvedMAC
 	#Comprobar la caché
 	with cacheLock:
-		if ip in cache:
+		if ip in cache and ip != myIP:
 			return cache[ip]
 			
 	#No está en la caché
@@ -372,3 +377,48 @@ def ARPResolution(ip:int) -> bytes:
 		requestedIP = None
 
 	return result
+	
+def checkIPConflict() -> bool:
+	global requestedIP, awaitingResponse, resolvedMAC
+
+	gratRequest = createARPRequest(myIP)
+
+	for intento in range(3):
+
+		# Preparar la espera de respuesta
+		with globalLock:
+			requestedIP = myIP
+			resolvedMAC = None
+			awaitingResponse = True
+
+		# Enviar petición ARP por broadcast
+		sendEthernetFrame(
+			gratRequest,
+			len(gratRequest),
+			0x0806,
+			broadcastAddr
+		)
+
+		# Esperar hasta un segundo
+		deadline = time.time() + 1
+
+		while time.time() < deadline:
+			with globalLock:
+				if not awaitingResponse:
+					mac = resolvedMAC
+					break
+			time.sleep(0.01)
+		else:
+			mac = None
+
+		# Limpiar el estado
+		with globalLock:
+			awaitingResponse = False
+			requestedIP = None
+			resolvedMAC = None
+
+		# Si alguien responde desde otra MAC, hay conflicto
+		if mac is not None and mac != myMAC:
+			return True
+
+	return False
