@@ -61,10 +61,11 @@ def initEthMsg(interface:str) -> int:
 		Argumentos:   
 			interfaz
 	'''
-	
-	if startEthernetLevel(interface) < 0:
-		return -1
-	
+    
+    if not interface:
+        logging.error('Interfaz no válida para EthMsg')
+        return -1
+    
 	registerEthCallback(process_ethMsg_frame, ETHTYPE)
 	
 	return 0
